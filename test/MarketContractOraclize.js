@@ -24,6 +24,7 @@ contract('MarketContractOraclize', function(accounts) {
     const entryOrderPrice = 33025;
     const accountMaker = accounts[0];
     const accountTaker = accounts[1];
+    const feeRecipient = accounts[2];
 
     beforeEach(async function() {
         collateralPool = await MarketCollateralPool.deployed();
@@ -35,7 +36,7 @@ contract('MarketContractOraclize', function(accounts) {
 
     it("Trade occurs, cancel occurs, balances transferred, positions updated", async function() {
         const timeStamp = ((new Date()).getTime() / 1000) + 60*5; // order expires 5 minute from now.
-        const orderAddresses = [accountMaker, accountTaker, accounts[2]];
+        const orderAddresses = [accountMaker, accountTaker, feeRecipient];
         const unsignedOrderValues = [0, 0, entryOrderPrice, timeStamp, 1];
         const orderQty = 5;   // user is attempting to buy 5
         const orderHash = await orderLib.createOrderHash.call(
@@ -123,7 +124,7 @@ contract('MarketContractOraclize', function(accounts) {
     const exitOrderPrice = 36025;
     it("Trade is unwound, correct collateral amount returns to user balances", async function() {
         const timeStamp = ((new Date()).getTime() / 1000) + 60*5; // order expires 5 minute from now.
-        const orderAddresses = [accountMaker, accountTaker, accounts[2]];
+        const orderAddresses = [accountMaker, accountTaker, feeRecipient];
         const orderPrice = 36025;
         const unsignedOrderValues = [0, 0, orderPrice, timeStamp, 1];
         const orderQty = -5;   // user is attempting to sell -5
@@ -188,7 +189,7 @@ contract('MarketContractOraclize', function(accounts) {
 
     it("should only allow remaining quantity to be filled for an overfilled trade.", async function() {
         const timeStamp = ((new Date()).getTime() / 1000) + 60*5; // order expires 5 minute from now.
-        const orderAddresses = [accountMaker, accountTaker, accounts[2]];
+        const orderAddresses = [accountMaker, accountTaker, feeRecipient];
         const unsignedOrderValues = [0, 0, entryOrderPrice, timeStamp, 1];
         const orderQty = 5;   // user is attempting to buy 5
         const qtyToFill = 10; // order is to be filled by 10
@@ -219,7 +220,7 @@ contract('MarketContractOraclize', function(accounts) {
 
     it("should only allow remaining quantity to be cancelled for an over cancelled trade.", async function() {
         const timeStamp = ((new Date()).getTime() / 1000) + 60*5; // order expires 5 minute from now.
-        const orderAddresses = [accountMaker, accountTaker, accounts[2]];
+        const orderAddresses = [accountMaker, accountTaker, feeRecipient];
         const unsignedOrderValues = [0, 0, entryOrderPrice, timeStamp, 1];
         const orderQty = -5;   // user is attempting to sell 5
         const qtyToFill = -1; // order is to be filled by 1
@@ -257,7 +258,7 @@ contract('MarketContractOraclize', function(accounts) {
 
     it("should fail for attempts to fill expired order", async function() {
         const expiredTimestamp = ((new Date()).getTime() / 1000) - 30; // order expired 30 seconds ago.
-        const orderAddresses = [accountMaker, accountTaker, accounts[2]];
+        const orderAddresses = [accountMaker, accountTaker, feeRecipient];
         const unsignedOrderValues = [0, 0, entryOrderPrice, expiredTimestamp, 1];
         const orderQty = 5;   // user is attempting to buy 5
         const qtyToFill = 1; // order is to be filled by 1
@@ -289,7 +290,7 @@ contract('MarketContractOraclize', function(accounts) {
 
     it("should fail for attempts to cancel expired order", async function() {
         const expiredTimestamp = ((new Date()).getTime() / 1000) - 30; // order expired 30 seconds ago.
-        const orderAddresses = [accountMaker, accountTaker, accounts[2]];
+        const orderAddresses = [accountMaker, accountTaker, feeRecipient];
         const unsignedOrderValues = [0, 0, entryOrderPrice, expiredTimestamp, 1];
         const orderQty = 5;   // user is attempting to buy 5
         const qtyToCancel = 1;
@@ -316,7 +317,7 @@ contract('MarketContractOraclize', function(accounts) {
 
     it("should fail for attempts to trade zero quantity", async function() {
         const expiredTimestamp = ((new Date()).getTime() / 1000) + 60 * 5; // order expires in 5 minutes.
-        const orderAddresses = [accountMaker, accountTaker, accounts[2]];
+        const orderAddresses = [accountMaker, accountTaker, feeRecipient];
         const unsignedOrderValues = [0, 0, entryOrderPrice, expiredTimestamp, 1];
         const zeroOrderQty = 0;
         const qtyToFill = 4;
@@ -351,7 +352,7 @@ contract('MarketContractOraclize', function(accounts) {
     it("should fail for attempts to create maker order and fill as taker from same account", async function() {
         const expiredTimestamp = ((new Date()).getTime() / 1000) + 60 * 5; // order expires in 5 minutes.
         const makerAndTakerAccount = accountMaker // same address for maker and taker
-        const orderAddresses = [makerAndTakerAccount, makerAndTakerAccount, accounts[2]];
+        const orderAddresses = [makerAndTakerAccount, makerAndTakerAccount, feeRecipient];
         const unsignedOrderValues = [0, 0, entryOrderPrice, expiredTimestamp, 1];
         const orderQty = 5;
         const qtyToFill = 1; // order is to be filled by 1
@@ -385,7 +386,7 @@ contract('MarketContractOraclize', function(accounts) {
 
     it("should fail for attempts to order and fill with price changed", async function() {
         const expiredTimestamp = ((new Date()).getTime() / 1000) + 60 * 5; // order expires in 5 minutes.
-        const orderAddresses = [accountMaker, accountTaker, accounts[2]];
+        const orderAddresses = [accountMaker, accountTaker, feeRecipient];
         const unsignedOrderValues = [0, 0, entryOrderPrice, expiredTimestamp, 1];
         const orderQty = 5;
         const qtyToFill = 1; // order is to be filled by 1
