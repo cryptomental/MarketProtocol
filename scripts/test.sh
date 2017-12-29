@@ -10,6 +10,7 @@ cleanup() {
   # Kill the testrpc instance that we started (if we started one and if it's still running).
   if [ -n "$testrpc_pid" ] && ps -p $testrpc_pid > /dev/null; then
     kill -9 $testrpc_pid
+    kill -9 $ethbridge_pid
   fi
 }
 
@@ -40,6 +41,11 @@ start_testrpc() {
 
   if [ "$SOLIDITY_COVERAGE" = true ]; then
     node_modules/.bin/testrpc-sc --gasLimit 0xfffffffffff --port "$testrpc_port" "${accounts[@]}" > /dev/null &
+    cd ../ethereum-bridge-coverage/
+    node bridge -H localhost:8555 -a 9 --dev &
+    ethbridge_pid=$!
+    sleep 60
+    cd -
   else
     node_modules/.bin/testrpc --gasLimit 0xfffffffffff "${accounts[@]}" > /dev/null &
   fi
