@@ -22,6 +22,7 @@ module.exports = function(deployer, network) {
         deployer.deploy(MarketToken, marketTokenToLockForTrading, marketTokenAmountForContractCreation).then(function() {
             return deployer.deploy(CollateralToken).then(function() {
                 var expiration = Math.floor(Date.now() / 1000) + 60 * 15; // expires in 15 minutes.
+                var block = web3.eth.getBlock("latest");
                 return deployer.deploy(
                                     MarketContractOraclize,
                                     "ETHXBT",
@@ -31,7 +32,7 @@ module.exports = function(deployer, network) {
                                     "URL",
                                     "json(https://api.kraken.com/0/public/Ticker?pair=ETHUSD).result.XETHZUSD.c.0",
                                     120,
-                                    { gas:6100000 ,
+                                    { gas:block.gasLimit,
                                     value: web3.toWei('.2', 'ether'), from: web3.eth.accounts[0]})
             }).then(function() {
                 return deployer.deploy(
