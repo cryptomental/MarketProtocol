@@ -80,6 +80,16 @@ module.exports = function(deployer, network) {
                         { gas: gasLimit, value: web3.toWei('.2', 'ether'), from: web3.eth.accounts[0]}
                     )
                 }).then(function(deployedMarketContract) {
+                    /*
+                    deployedMarketContract
+                      .estimateCostOfOraclizeCallback
+                      .estimateGas(web3.fromAscii("20160528"), "1234", web3.fromAscii("DEADBEEF"))
+                      .then(function (estimate) {
+                        console.log("gasEstimate : " + estimate);
+                      }).catch((err) => {
+                        console.log(err);
+                      });
+                    */
                     return MarketCollateralPool.new(
                         deployedMarketContract.address
                     ).then(function(deployedMarketCollateralPool) {
