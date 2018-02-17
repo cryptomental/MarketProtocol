@@ -32,10 +32,12 @@ contract MarketContractOraclize is MarketContract, usingOraclize {
     string public ORACLE_QUERY;
     uint public ORACLE_QUERY_REPEAT;
     uint constant public COST_PER_QUERY = 2 finney;    // leave static for now, price of first query from oraclize is 0
-    uint constant public QUERY_CALLBACK_GAS = 300000;
+    uint public QUERY_CALLBACK_GAS = 300000;
 
     // state variables
     string public lastPriceQueryResult;
+    address contractOwner;
+
     mapping(bytes32 => bool) validScheduledQueryIDs;
     mapping(bytes32 => bool) validUserRequestedQueryIDs;
 
@@ -79,6 +81,7 @@ contract MarketContractOraclize is MarketContract, usingOraclize {
         ORACLE_QUERY = oracleQuery;
         ORACLE_QUERY_REPEAT = oracleQueryRepeatSeconds;
         require(checkSufficientStartingBalance(EXPIRATION.subtract(now)));
+        contractOwner = msg.sender;  // msg.sender points to the address that deployed the contract
         queryOracle();  // schedules recursive calls to oracle
     }
 
@@ -109,6 +112,18 @@ contract MarketContractOraclize is MarketContract, usingOraclize {
     /// @param proof result proof
     function __callback(bytes32 queryID, string result, bytes proof) public {
         require(msg.sender == oraclize_cbAddress());
+        oraclizeCallback(queryID, result, proof);
+    }
+
+    // @notice can be called only by the contract owner to estimate gas limit of the Oraclize callback
+    // gasEstimate = contractInstance.estimateCostOfOraclizeCallback.estimateGas(q, r, p);
+    function estimateCostOfOraclizeCallback(bytes32 queryID, string result, bytes proof) {
+        require(msg.sender == contractOwner);
+        oraclizeCallback(queryID, result, proof);
+    }
+
+
+    function oraclizeCallback(bytes32 queryID, string result, bytes proof) public {
         bool isScheduled = validScheduledQueryIDs[queryID];
         require(isScheduled || validUserRequestedQueryIDs[queryID]);
         lastPriceQueryResult = result;
@@ -126,6 +141,12 @@ contract MarketContractOraclize is MarketContract, usingOraclize {
         } else {
             delete validUserRequestedQueryIDs[queryID];
         }
+    }
+
+    // @notice can be called only by the contract owner to set gas limit of the Oraclize callback
+    function setOraclizeCallbackGasLimit(uint gasLimit) {
+        require(msg.sender == contractOwner);
+        QUERY_CALLBACK_GAS = gasLimit;
     }
 
     /*
